@@ -1,0 +1,39 @@
+name: Deploy Backend API
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install --production
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            sudo mkdir -p /var/www/backend
+            sudo rm -rf /var/www/backend/*
+            sudo chmod -R 755 /var/www/backend
+            rsync -avz --delete ./ ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}:/var/www/backend
+            cd /var/www/backend
+            npm install --production
+            pm2 stop all || true
+            pm2 start server.js --name backend --watch
+            pm2 save
