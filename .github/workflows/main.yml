@@ -3,7 +3,7 @@ name: Deploy Backend API
 on:
   push:
     branches:
-      - main   # runs when you push to main branch
+      - main
 
 jobs:
   deploy:
